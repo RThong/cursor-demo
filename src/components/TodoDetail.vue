@@ -2,15 +2,16 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Todo } from '../types/todo'
+import { todoStorage } from '../utils/storage'
 
 const route = useRoute()
 const router = useRouter()
 const todo = ref<Todo | null>(null)
 
 onMounted(() => {
-  const todos = JSON.parse(localStorage.getItem('vue-todo-items') || '[]') as Todo[]
-  todo.value = todos.find(t => t.id === Number(route.params.id)) || null
-  
+  const id = Number(route.params.id)
+  todo.value = todoStorage.getById(id) || null
+
   if (!todo.value) {
     router.push('/')
   }
@@ -18,15 +19,9 @@ onMounted(() => {
 
 const toggleComplete = () => {
   if (!todo.value) return
-  
+
   todo.value.completed = !todo.value.completed
-  
-  const todos = JSON.parse(localStorage.getItem('vue-todo-items') || '[]') as Todo[]
-  const index = todos.findIndex(t => t.id === todo.value?.id)
-  if (index !== -1) {
-    todos[index] = todo.value
-    localStorage.setItem('vue-todo-items', JSON.stringify(todos))
-  }
+  todoStorage.update(todo.value)
 }
 
 const formatDate = (dateString: string): string => {
@@ -39,10 +34,9 @@ const formatDate = (dateString: string): string => {
     <div class="bg-white rounded-lg shadow-lg p-6">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-gray-800">待办事项详情</h2>
-        <span 
+        <span
           class="px-3 py-1 rounded-full text-sm"
-          :class="todo.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
-        >
+          :class="todo.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'">
           {{ todo.completed ? '已完成' : '进行中' }}
         </span>
       </div>
@@ -70,20 +64,18 @@ const formatDate = (dateString: string): string => {
       </div>
 
       <div class="flex justify-end gap-4">
-        <button 
+        <button
           @click="toggleComplete"
           class="px-4 py-2 rounded-md text-white transition-colors"
-          :class="todo.completed ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'"
-        >
+          :class="todo.completed ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'">
           {{ todo.completed ? '标记为未完成' : '标记为已完成' }}
         </button>
-        <button 
+        <button
           @click="$router.push('/')"
-          class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-        >
+          class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">
           返回列表
         </button>
       </div>
     </div>
   </div>
-</template> 
+</template>
